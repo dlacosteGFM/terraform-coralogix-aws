@@ -182,6 +182,12 @@ variable "existing_lambda_processor_iam" {
   default     = null
 }
 
+variable "existing_lambda_processor_arn" {
+  description = "Use an existing lambda processor function: do not generate lambda related resources in this module"
+  type        = string
+  default     = null
+}
+
 variable "firehose_iam_custom_name" {
   description = "Set the name of the firehose IAM role & policy, otherwise variable '{firehose_stream}-firehose-metrics-iam' will be used"
   type        = string

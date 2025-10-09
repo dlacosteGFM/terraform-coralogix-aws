@@ -131,6 +131,18 @@ module "cloudwatch_firehose_metrics_coralogix" {
 }
 ```
 
+If you would like to use your own existing lambda rather than the provided one, you can set the variable `existing_lambda_processor_arn` to the ARN of an existing lambda function.  (This will block the creation of the resources in the same way that `lambda_processor_enable == false` does.)
+
+```terraform
+module "cloudwatch_firehose_metrics_coralogix" {
+  source                           = "coralogix/aws/coralogix//modules/firehose-metrics"
+  existing_lambda_processor_arn    = aws_lambda_function.existing_lambda_processor.arn
+  firehose_stream                  = var.coralogix_firehose_stream_name
+  api_key                          = var.api_key
+  coralogix_region                 = var.coralogix_region
+}
+```
+
 Read more about the following:
 
 - [Statistics that can be streamed](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-metric-streams-statistics.html)
