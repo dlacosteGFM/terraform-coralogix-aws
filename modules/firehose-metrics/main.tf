@@ -29,8 +29,8 @@ locals {
   # global resource referecing
   s3_backup_bucket_arn          = var.existing_s3_backup != null ? one(data.aws_s3_bucket.exisiting_s3_bucket[*].arn) : one(aws_s3_bucket.new_s3_bucket[*].arn)
   lambda_processor_iam_role_arn = var.existing_lambda_processor_iam != null ? one(data.aws_iam_role.existing_lambda_iam[*].arn) : one(aws_iam_role.new_lambda_iam[*].arn)
-  lambda_processor_arn = var.existing_lambda_processor_arn != null ? var.existing_lambda_processor_arn) : one(aws_lambda_function.lambda_processor[*].arn)
-  create_lambda_resources = var.lambda_processor_enable && var.existing_lambda_processor_arn == null
+  lambda_processor_arn          = var.existing_lambda_processor_arn != null ? var.existing_lambda_processor_arn : one(aws_lambda_function.lambda_processor[*].arn)
+  create_lambda_resources       = var.lambda_processor_enable && var.existing_lambda_processor_arn == null
   firehose_iam_role_arn         = var.existing_firehose_iam != null ? one(data.aws_iam_role.existing_firehose_iam[*].arn) : one(aws_iam_role.new_firehose_iam[*].arn)
   metrics_stream_iam_role_arn   = var.existing_metric_streams_iam != null ? one(data.aws_iam_role.existing_metric_streams_iam[*].arn) : one(aws_iam_role.new_metric_streams_iam[*].arn)
 
