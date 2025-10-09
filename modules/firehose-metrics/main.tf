@@ -30,7 +30,6 @@ locals {
   s3_backup_bucket_arn          = var.existing_s3_backup != null ? one(data.aws_s3_bucket.exisiting_s3_bucket[*].arn) : one(aws_s3_bucket.new_s3_bucket[*].arn)
   lambda_processor_iam_role_arn = var.existing_lambda_processor_iam != null ? one(data.aws_iam_role.existing_lambda_iam[*].arn) : one(aws_iam_role.new_lambda_iam[*].arn)
   lambda_processor_arn          = var.existing_lambda_processor_arn != null ? var.existing_lambda_processor_arn : one(aws_lambda_function.lambda_processor[*].arn)
-  create_lambda_resources       = var.lambda_processor_enable && var.existing_lambda_processor_arn == null
   firehose_iam_role_arn         = var.existing_firehose_iam != null ? one(data.aws_iam_role.existing_firehose_iam[*].arn) : one(aws_iam_role.new_firehose_iam[*].arn)
   metrics_stream_iam_role_arn   = var.existing_metric_streams_iam != null ? one(data.aws_iam_role.existing_metric_streams_iam[*].arn) : one(aws_iam_role.new_metric_streams_iam[*].arn)
 
@@ -228,7 +227,7 @@ resource "aws_iam_role_policy_attachment" "new_firehose_iam" {
 }
 
 data "aws_iam_policy_document" "lambda_assume_policy" {
-  count = local.create_lambda_resources == true ? 1 : 0
+  count = (var.lambda_processor_enable) ? 1 : 0
   statement {
     effect = "Allow"
 
@@ -242,19 +241,19 @@ data "aws_iam_policy_document" "lambda_assume_policy" {
 }
 
 data "aws_iam_role" "existing_lambda_iam" {
-  count = local.create_lambda_resources && var.existing_lambda_processor_iam != null ? 1 : 0
+  count = (var.lambda_processor_enable && var.existing_lambda_processor_iam != null) ? 1 : 0
   name  = var.existing_lambda_processor_iam
 }
 
 resource "aws_iam_role" "new_lambda_iam" {
-  count              = local.create_lambda_resources && var.existing_lambda_processor_iam == null ? 1 : 0
+  count              = (var.lambda_processor_enable && var.existing_lambda_processor_iam == null) ? 1 : 0
   name               = local.new_lambda_processor_iam_name
   tags               = local.tags
   assume_role_policy = one(data.aws_iam_policy_document.lambda_assume_policy[*].json)
 }
 
 resource "aws_iam_role_policy" "new_lambda_iam" {
-  count  = local.create_lambda_resources && var.existing_lambda_processor_iam == null ? 1 : 0
+  count  = (var.lambda_processor_enable && var.existing_lambda_processor_iam == null) ? 1 : 0
   name   = local.new_lambda_processor_iam_name
   role   = one(aws_iam_role.new_lambda_iam[*].id)
   policy = <<EOF
@@ -297,7 +296,7 @@ EOF
 }
 
 resource "aws_cloudwatch_log_group" "loggroup" {
-  count             = local.create_lambda_resources ? 1 : 0
+  count             = (var.lambda_processor_enable) ? 1 : 0
   name              = "/aws/lambda/${one(aws_lambda_function.lambda_processor[*].function_name)}"
   retention_in_days = var.cloudwatch_retention_days
   tags              = local.tags
@@ -305,7 +304,7 @@ resource "aws_cloudwatch_log_group" "loggroup" {
 
 resource "aws_lambda_function" "lambda_processor" {
   depends_on    = [null_resource.s3_bucket_copy]
-  count         = local.create_lambda_resources ? 1 : 0
+  count         = (var.lambda_processor_enable) ? 1 : 0
   s3_bucket     = coalesce(var.custom_s3_bucket, "cx-cw-metrics-tags-lambda-processor-${data.aws_region.current_region.name}")
   s3_key        = "bootstrap.zip"
   function_name = local.lambda_processor_name
